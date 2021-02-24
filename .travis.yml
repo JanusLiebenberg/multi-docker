@@ -1,0 +1,26 @@
+﻿sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t jliebenberg/multi-docker-react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true jliebenberg/multi-docker-react-test npm run test -- --coverage
+
+after_success:
+  - docker build -t jliebenberg/multi-client ./client
+  - docker build -t jliebenberg/multi-nginx ./nginx
+  - docker build -t jliebenberg/multi-server ./server
+  - docker build -t jliebenberg/multi-worker ./worker
+    
+  # log in to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # push images to docker hub
+  - docker push jliebenberg/multi-client
+  - docker push jliebenberg/multi-nginx
+  - docker push jliebenberg/multi-server
+  - docker push jliebenberg/multi-worker 
